@@ -1,0 +1,2883 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expo Visit History</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: url('expo_design.png') center/cover;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.75);
+            z-index: 0;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #e6007e;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #333;
+            margin-top: 4px;
+        }
+
+        .entrance-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .entrance-item {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .entrance-item:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .entrance-header {
+            padding: 16px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            user-select: none;
+        }
+
+        .entrance-header:active {
+            opacity: 0.9;
+        }
+
+        .entrance-date {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .date-main {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .date-time {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .date-schedule {
+            font-size: 12px;
+            opacity: 0.85;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 2px;
+        }
+
+        .entrance-count {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .toggle-icon {
+            font-size: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .entrance-item.active .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .pavilion-list {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .entrance-item.active .pavilion-list {
+            max-height: 5000px;
+        }
+
+        .pavilion-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .pavilion-item:last-child {
+            border-bottom: none;
+        }
+
+        .pavilion-status {
+            font-size: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .pavilion-info {
+            flex: 1;
+        }
+
+        .pavilion-time {
+            font-size: 13px;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .channel-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .channel-1 {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .channel-2 {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .channel-3 {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .channel-4 {
+            background: #fce4ec;
+            color: #c2185b;
+        }
+
+        .channel-5 {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .pavilion-name {
+            font-size: 15px;
+            color: #333;
+            line-height: 1.5;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .pavilion-summary {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+
+        .no-pavilions {
+            padding: 24px;
+            text-align: center;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+
+        .error {
+            background: #fff;
+            padding: 24px;
+            border-radius: 12px;
+            color: #e53e3e;
+            text-align: center;
+        }
+
+        .chart-container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 24px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+        }
+
+        .chart-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 300px;
+            border-bottom: 3px solid #333;
+            border-left: 3px solid #333;
+            padding: 40px 10px 10px 10px;
+            position: relative;
+            background: white;
+            margin: 0 auto;
+            max-width: 100%;
+            overflow-x: auto;
+            gap: 8px;
+        }
+
+        .chart-bar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            max-width: 80px;
+            min-width: 60px;
+        }
+
+        .chart-bar {
+            width: 100%;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .chart-bar:hover {
+            opacity: 0.8;
+        }
+
+        .chart-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .chart-label {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #666;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .chart-y-axis {
+            position: absolute;
+            left: -40px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .stat-number {
+                font-size: 28px;
+            }
+
+            .stats {
+                gap: 16px;
+            }
+
+            .entrance-header {
+                padding: 14px 16px;
+            }
+
+            .date-main {
+                font-size: 16px;
+            }
+
+            .pavilion-item {
+                padding: 14px 16px;
+            }
+
+            .chart-container {
+                padding: 12px 8px;
+            }
+
+            .chart {
+                height: 220px;
+                padding: 35px 5px 5px 5px;
+                gap: 2px;
+            }
+
+            .chart-bar-wrapper {
+                max-width: 38px;
+                min-width: 35px;
+            }
+
+            .chart-label {
+                font-size: 9px;
+            }
+
+            .chart-value {
+                font-size: 11px;
+                top: -18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>大阪・関西万博 入場履歴</h1>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-number" id="total-visits">-</div>
+                    <div class="stat-label">入場回数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="total-pavilions">-</div>
+                    <div class="stat-label">予約パビリオン</div>
+                </div>
+            </div>
+        </div>
+        <div id="app">
+            <div class="loading">読み込み中...</div>
+        </div>
+        <div class="chart-container">
+            <div class="chart-title">月別入場回数</div>
+            <div id="chart"></div>
+        </div>
+    </div>
+
+    <script>
+        // JSONデータを直接埋め込み
+        const embeddedData = {
+  "list": [
+    {
+      "id": 3652660,
+      "ticket_id": "PSZKFD7MKJ",
+      "agent_code": "0010",
+      "item_group_code": "0001",
+      "item_code": "00051",
+      "item_group_order": 10,
+      "item_order": 1,
+      "simple_ticket_id": "PSZKFD7MKJ",
+      "disp_status": 3,
+      "item_group_name": "開幕券",
+      "item_name": "開幕券",
+      "item_abb_name": "18-",
+      "item_summary": "大人（満18歳以上）",
+      "image_large_path": "/tickethub_file/images/0433/00433/0010/0/item_large_image/243cfff60b18b049460968201b732a8aa07d.gif",
+      "order_number": null,
+      "receive_type": 2,
+      "received_at": "2025-04-13 17:45:12 +0900",
+      "schedules": [
+        {
+          "user_visiting_reservation_id": 1606493,
+          "use_state": 1,
+          "entrance_date": "20250426",
+          "gate_type": 1,
+          "schedule_name": "9:00-",
+          "start_time": "0700",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "092327",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": true,
+          "month_lottery": false,
+          "day_lottery": true,
+          "lotteries": {
+            "month": [],
+            "day": [
+              {
+                "state": 1,
+                "entrance_date": "20250426"
+              }
+            ]
+          }
+        }
+      ],
+      "event_schedules": [
+        {
+          "entrance_date": "20250426",
+          "schedule_name": "11:00-11:15",
+          "event_name": "大阪ヘルスケアパビリオン（本館）　リボーン体験",
+          "event_summary": "【想定所要時間60分】【集合時間：表示時刻通り】ミライの自分に会いにきませんか？みなさんの健康データをもとに作成された25年後の自分（アバター）と出会い、ミライのヘルスケアや都市生活を体験いただけます。2050年のミライであなたをお待ちしています！【留意事項：(1)このプログラムのご体験には、パビリオン公式アプリ又はWEBページから簡単な事前情報登録が必要です。(2)ご登録にあたっては、リンク先の利用基準や想定所要時間の詳細をご確認ください。】　※３歳以下の方もご予約が必要です。",
+          "use_state": 1,
+          "registered_channel": 3,
+        },
+        {
+          "entrance_date": "20250426",
+          "schedule_name": "13:20-13:40",
+          "event_name": "大阪ヘルスケアパビリオン XDホール 「モンスターハンター ブリッジ」",
+          "event_summary": "【想定所要時間30分】【集合時間：表示時刻通り】360度の映像と音響、振動する床、さらに新たに開発した専用のARデバイスを介して、夢の世界と現実の世界が繋がります。当パビリオンのテーマ「REBORN」から着想を得た「モンスターハンター」の世界を、没入空間でお楽しみください。",
+          "use_state": 1,
+          "registered_channel": 3,
+        },
+        {
+          "id": 5142558,
+          "schedule_code": "2025042633I300",
+          "schedule_no": "33",
+          "schedule_name": "17:00-17:15",
+          "program_code": "I300",
+          "entrance_date": "20250426",
+          "start_time": "1700",
+          "end_time": "1715",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:12:20 +0900",
+          "created_at": "2024-08-30 01:43:19 +0900",
+          "event_code": "I300",
+          "event_name": "シグネチャーパビリオン 宮田裕章 「Better Co-Being」",
+          "event_summary": "【所要時間：45分】【受付時間：予約時間の5分前まで】屋根も壁もなく、万博会場中央にある静けさの森と一体となって佇むこれまでにないパビリオンです。ここでは文明の転換をもたらす技術の本質を「共鳴」であると捉え、境界を溶かす空間の中で人と人、人と世界、人と未来についての問いを共有します。来場者はアートを軸にした体験を通して、一人ひとりの多様な豊かさと、持続可能な未来の調和の中で共に歩み、未来を考えます。私たちは来場者の皆さんとの共鳴体験が「いのち輝く未来社会」への手がかりになることを願っています。※受付時間を過ぎると入館できません。※体験にはスマートフォンとWEBアプリが必要となります。その他注意事項は来館前にパビリオンHPでご確認ください。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-344689",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://co-being.jp/expo2025/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "PSZKFD7MKJ",
+          "registered_channel": 5,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "170100",
+          "admission_buf_during": false
+        },
+        {
+          "id": 4246047,
+          "schedule_code": "2025042659CFV0",
+          "schedule_no": "59",
+          "schedule_name": "19:10-19:20",
+          "program_code": "CFV0",
+          "entrance_date": "20250426",
+          "start_time": "1910",
+          "end_time": "1920",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:03:07 +0900",
+          "created_at": "2024-12-13 02:01:36 +0900",
+          "event_code": "CFV0",
+          "event_name": "国連パビリオン",
+          "event_summary": "【所要時間20分】「人類は団結したとき最も強くなる（United for a Better Future）」をテーマに30以上の国連機関が一致団結して出展する国連パビリオン。193か国が参加する「世界のタウンホール」としての役割を持つ国連が、貧困や気候変動、人権など様々な課題の解決とSDGsの達成に向け、国や分野の垣根を越えて協力することの重要性を発信します。見どころは、巨大な半球シアターに映し出される没入型ムービー。圧巻の映像を通して、持続可能な未来の世界を体験してください。また、国連創設80年の歴史を振り返る「タイムライン・ウォール」や、日常の身近なオブジェクトを通して、国連の活動が私たちの生活にどのように関わっているかを感じられる「オーブ（球体）の部屋」は必見です。この他にも、特別展やワークショップ、体験型コンテンツや写真ブースなど、コンパクトながら、子どもから大人まで楽しめる多彩なプログラムが揃っています。また、パビリオン内のギフトショップでは、国連やSDGsに関連するグッズや国連パビリオン限定商品を販売中です。国連パビリオンでは、世界中の人びとが抱える重要なテーマを楽しく学んでいただけます。ぜひご来場いただき、ともにより良い未来を達成するための一歩を踏み出しましょう。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-658893",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "",
+          "portal_url_desc": "",
+          "ticket_id": "PSZKFD7MKJ",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 0,
+          "admission_time": null,
+          "admission_buf_during": false
+        }
+      ],
+      "ticket_type_id": "11",
+      "change_reservation": 3,
+      "fast_lottery": false,
+      "lotteries": {
+        "fast": []
+      },
+      "adult_type": true,
+      "disp_bid_status": null
+    },
+    {
+      "id": 4938235,
+      "ticket_id": "EUCAGY3ZPN",
+      "agent_code": "0010",
+      "item_group_code": "0014",
+      "item_code": "00501",
+      "item_group_order": 21,
+      "item_order": 1,
+      "simple_ticket_id": "EUCAGY3ZPN",
+      "disp_status": 3,
+      "item_group_name": "通期パス",
+      "item_name": "通期パス",
+      "item_abb_name": "18-",
+      "item_summary": "大人（満18歳以上）",
+      "image_large_path": "/tickethub_file/images/0433/00433/0010/0/item_large_image/d477b10309c43041f70a54c08d751e48516b.gif",
+      "order_number": "PN2504272131060017977882054",
+      "receive_type": 1,
+      "received_at": "2025-04-27 21:33:46 +0900",
+      "schedules": [
+        {
+          "user_visiting_reservation_id": 3943754,
+          "use_state": 1,
+          "entrance_date": "20250501",
+          "gate_type": 1,
+          "schedule_name": "17:00-",
+          "start_time": "1600",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "183809",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 4188683,
+          "use_state": 1,
+          "entrance_date": "20250503",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "114333",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 4330445,
+          "use_state": 1,
+          "entrance_date": "20250504",
+          "gate_type": 1,
+          "schedule_name": "10:00-",
+          "start_time": "0900",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "143156",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 4711864,
+          "use_state": 1,
+          "entrance_date": "20250506",
+          "gate_type": 1,
+          "schedule_name": "10:00-",
+          "start_time": "0900",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "103528",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 5128703,
+          "use_state": 1,
+          "entrance_date": "20250511",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "114422",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 6022206,
+          "use_state": 1,
+          "entrance_date": "20250518",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "120513",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 7030273,
+          "use_state": 1,
+          "entrance_date": "20250524",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "120820",
+          "admission_buf_during": false,
+          "empty_frame": false,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 6163400,
+          "use_state": 1,
+          "entrance_date": "20250525",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "114151",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 8221007,
+          "use_state": 1,
+          "entrance_date": "20250531",
+          "gate_type": 1,
+          "schedule_name": "12:00-",
+          "start_time": "1100",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "183905",
+          "admission_buf_during": false,
+          "empty_frame": false,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 7735439,
+          "use_state": 1,
+          "entrance_date": "20250601",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "112646",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 9845843,
+          "use_state": 1,
+          "entrance_date": "20250608",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "112218",
+          "admission_buf_during": false,
+          "empty_frame": false,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 9390066,
+          "use_state": 1,
+          "entrance_date": "20250614",
+          "gate_type": 1,
+          "schedule_name": "12:00-",
+          "start_time": "1100",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "130307",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 9829184,
+          "use_state": 1,
+          "entrance_date": "20250615",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "112551",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 11766491,
+          "use_state": 1,
+          "entrance_date": "20250621",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "124020",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 11822918,
+          "use_state": 1,
+          "entrance_date": "20250622",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "123329",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 12770135,
+          "use_state": 1,
+          "entrance_date": "20250628",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "161430",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 13085563,
+          "use_state": 1,
+          "entrance_date": "20250629",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "123225",
+          "admission_buf_during": false,
+          "empty_frame": false,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 14165958,
+          "use_state": 1,
+          "entrance_date": "20250706",
+          "gate_type": 1,
+          "schedule_name": "10:00-",
+          "start_time": "0900",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "110102",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 14784895,
+          "use_state": 1,
+          "entrance_date": "20250713",
+          "gate_type": 1,
+          "schedule_name": "10:00-",
+          "start_time": "0900",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "121151",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 16399035,
+          "use_state": 1,
+          "entrance_date": "20250719",
+          "gate_type": 1,
+          "schedule_name": "10:00-",
+          "start_time": "0900",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "182249",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 15308492,
+          "use_state": 1,
+          "entrance_date": "20250721",
+          "gate_type": 1,
+          "schedule_name": "10:00-",
+          "start_time": "0900",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "144314",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 17966682,
+          "use_state": 1,
+          "entrance_date": "20250726",
+          "gate_type": 1,
+          "schedule_name": "10:00-",
+          "start_time": "0900",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "145841",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 18865209,
+          "use_state": 1,
+          "entrance_date": "20250727",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "155036",
+          "admission_buf_during": false,
+          "empty_frame": false,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 19169751,
+          "use_state": 1,
+          "entrance_date": "20250802",
+          "gate_type": 1,
+          "schedule_name": "10:00-",
+          "start_time": "0900",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "115508",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 20312659,
+          "use_state": 1,
+          "entrance_date": "20250809",
+          "gate_type": 1,
+          "schedule_name": "10:00-",
+          "start_time": "0900",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "153409",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 17445209,
+          "use_state": 1,
+          "entrance_date": "20250812",
+          "gate_type": 1,
+          "schedule_name": "10:00-",
+          "start_time": "0900",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "113008",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": true,
+          "day_lottery": true,
+          "lotteries": {
+            "month": [
+              {
+                "state": 1,
+                "entrance_date": "20250812"
+              }
+            ],
+            "day": [
+              {
+                "state": 1,
+                "entrance_date": "20250812"
+              }
+            ]
+          }
+        },
+        {
+          "user_visiting_reservation_id": 10599649,
+          "use_state": 1,
+          "entrance_date": "20250814",
+          "gate_type": 1,
+          "schedule_name": "9:00-",
+          "start_time": "0700",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "105222",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": true,
+          "day_lottery": true,
+          "lotteries": {
+            "month": [
+              {
+                "state": 1,
+                "entrance_date": "20250814"
+              }
+            ],
+            "day": [
+              {
+                "state": 1,
+                "entrance_date": "20250814"
+              }
+            ]
+          }
+        },
+        {
+          "user_visiting_reservation_id": 23095226,
+          "use_state": 1,
+          "entrance_date": "20250830",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "172017",
+          "admission_buf_during": false,
+          "empty_frame": false,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 23792537,
+          "use_state": 1,
+          "entrance_date": "20250831",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "144019",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 31132593,
+          "use_state": 1,
+          "entrance_date": "20250906",
+          "gate_type": 1,
+          "schedule_name": "12:00-",
+          "start_time": "1100",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "145509",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 33416541,
+          "use_state": 1,
+          "entrance_date": "20250907",
+          "gate_type": 1,
+          "schedule_name": "12:00-",
+          "start_time": "1100",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "153942",
+          "admission_buf_during": false,
+          "empty_frame": false,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 33959261,
+          "use_state": 1,
+          "entrance_date": "20250915",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "140627",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 43838642,
+          "use_state": 1,
+          "entrance_date": "20250920",
+          "gate_type": 1,
+          "schedule_name": "12:00-",
+          "start_time": "1100",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "152202",
+          "admission_buf_during": false,
+          "empty_frame": false,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 58407950,
+          "use_state": 1,
+          "entrance_date": "20250923",
+          "gate_type": 1,
+          "schedule_name": "12:00-",
+          "start_time": "1100",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "170436",
+          "admission_buf_during": false,
+          "empty_frame": false,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 22037179,
+          "use_state": 1,
+          "entrance_date": "20250927",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "153316",
+          "admission_buf_during": false,
+          "empty_frame": true,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 94246169,
+          "use_state": 1,
+          "entrance_date": "20250928",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "142853",
+          "admission_buf_during": false,
+          "empty_frame": false,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 135284049,
+          "use_state": 1,
+          "entrance_date": "20251004",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "134822",
+          "admission_buf_during": false,
+          "empty_frame": false,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 196455072,
+          "use_state": 1,
+          "entrance_date": "20251011",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "131100",
+          "admission_buf_during": false,
+          "empty_frame": false,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": false,
+          "lotteries": {
+            "month": [],
+            "day": []
+          }
+        },
+        {
+          "user_visiting_reservation_id": 30752492,
+          "use_state": 1,
+          "entrance_date": "20251013",
+          "gate_type": 1,
+          "schedule_name": "11:00-",
+          "start_time": "1000",
+          "proxy_reserve": false,
+          "group_ticket_qr_divi": 0,
+          "admission_time": "133105",
+          "admission_buf_during": false,
+          "empty_frame": false,
+          "on_the_day": false,
+          "month_lottery": false,
+          "day_lottery": true,
+          "lotteries": {
+            "month": [],
+            "day": [
+              {
+                "state": 1,
+                "entrance_date": "20251013"
+              }
+            ]
+          }
+        }
+      ],
+      "event_schedules": [
+        {
+          "id": 106439016,
+          "schedule_code": "2025081217HQH0",
+          "schedule_no": "17",
+          "schedule_name": "12:48-13:00",
+          "program_code": "HQH0",
+          "entrance_date": "20250812",
+          "start_time": "1228",
+          "end_time": "1305",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:11:04 +0900",
+          "created_at": "2024-08-30 01:42:19 +0900",
+          "event_code": "HQH0",
+          "event_name": "GUNDAM NEXT FUTURE PAVILION",
+          "event_summary": "【所要時間　５０分】ガンダムを通して世界中の人とつながり、ともに「未来」を考えるきっかけの場となることを目指します。※パビリオンデーの7月20日の入館予約については、後日発表予定です。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-519633",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://www.bandainamco.co.jp/gundam-next-future-pavilion/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 5,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "124143",
+          "admission_buf_during": false
+        },
+        {
+          "id": 88399084,
+          "schedule_code": "2025080213HUH0",
+          "schedule_no": "13",
+          "schedule_name": "13:10-13:30",
+          "program_code": "HUH0",
+          "entrance_date": "20250802",
+          "start_time": "1310",
+          "end_time": "1330",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:11:25 +0900",
+          "created_at": "2024-08-30 01:42:40 +0900",
+          "event_code": "HUH0",
+          "event_name": "ガスパビリオン・おばけワンダーランド/XRゴーグル(利用制限あり)",
+          "event_summary": "＜XRゴーグル利用＞■所要時間：約40分■概要：「おばけワンダーランド」で可愛いおばけたちと一緒にワクワク体験を楽しもう！ ■参加条件：7歳以上。7歳～13歳未満での参加は保護者の同伴または同意書（リンク先参照）が必要です。付き添いなど、同伴保護者が体験しない場合、同伴保護者分の予約は不要です。■集合時間：ご予約された時間内にお越しください。■その他、下記のリンク先「予約にあたっての注意事項」を必ずご一読いただき、ご予約をお願いします。※「スマートデバイス」プログラムは、７日前抽選からご予約可能です。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-127606",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://www.gaspavilion.gas.or.jp/pavilion/notes/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "131638",
+          "admission_buf_during": false
+        },
+        {
+          "entrance_date": "20250802",
+          "schedule_name": "17:50-18:00",
+          "event_name": "くら寿司  大阪・関西万博店",
+          "registered_channel": 2,
+          "event_summary": "「回転ベルトは、世界を一つに。」をコンセプトに楽しい世界の食体験ができる場を提供。",
+          "use_state": 1,
+        },
+        {
+          "id": 36945993,
+          "schedule_code": "2025061515HEH0",
+          "schedule_no": "15",
+          "schedule_name": "13:50-14:10",
+          "program_code": "HEH0",
+          "entrance_date": "20250615",
+          "start_time": "1350",
+          "end_time": "1410",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:09:33 +0900",
+          "created_at": "2024-08-30 01:41:26 +0900",
+          "event_code": "HEH0",
+          "event_name": "住友館",
+          "event_summary": "【体験時間：65分】【サイトに記載の予約時間が「受付時間」です。】例）10:00～10:20の間に受付⇒10:25頃より体験開始●予約時間を過ぎるとキャンセルとなります。●抽選式デジタル整理券でお申し込みいただく予約無し列入場枠もございます。 ●開館時間9:00。初回の受付時間は9:00～9:20で入館は9:25頃からです。●３歳以下のお子様は、予約不要で大人の方と一緒に入館できます。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-660269",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://www.expovisitors.expo2025.or.jp/pavilions/60fd16ee-8778-4045-94f7-ae53dd874715",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "135500",
+          "admission_buf_during": false
+        },
+        {
+          "entrance_date": "20250615",
+          "schedule_name": "16:00-16:30",
+          "event_name": "チェコパビリオン文化プログラム Jan Smigmator & Band",
+          "event_summary": "チェコを代表するジャズギタリスト、ヤン・スミグマトル率いるバンドによるライブパフォーマンスをお楽しみください。",
+          "use_state": 1,
+          "registered_channel": 5,
+        },
+        {
+          "entrance_date": "20250615",
+          "schedule_name": "16:50-17:00",
+          "event_name": "くら寿司  大阪・関西万博店",
+          "event_summary": "「回転ベルトは、世界を一つに。」をコンセプトに楽しい世界の食体験ができる場を提供。",
+          "use_state": 1,
+          "registered_channel": 2,
+        },
+        {
+          "id": 63897648,
+          "schedule_code": "2025071309C7R0",
+          "schedule_no": "09",
+          "schedule_name": "14:00-14:30",
+          "program_code": "C7R0",
+          "entrance_date": "20250713",
+          "start_time": "1350",
+          "end_time": "1430",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:02:20 +0900",
+          "created_at": "2024-12-26 02:00:58 +0900",
+          "event_code": "C7R0",
+          "event_name": "オランダパビリオン　コモングラウンド",
+          "event_summary": "共に分かち合い、新しい価値を生み出すこと『コモングラウンド』を参加テーマに、オランダは人々と健全で幸せな社会構築を目指しています。循環型コンセプトで造られるパビリオンの名は、“A New Dawn‐新たな幕開け”。建物の中心には球体があり、持続的に利用可能なクリーンエネルギーと日の出を表現しています。人々が集い、互いに学び、刺激し合う開かれた空間のパビリオン内では、クリーンエネルギーを水から生成する新技術を紹介予定です。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-161891",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "",
+          "portal_url_desc": "",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "141601",
+          "admission_buf_during": false
+        },
+        {
+          "id": 33910876,
+          "schedule_code": "2025060830H5H0",
+          "schedule_no": "30",
+          "schedule_name": "14:10-14:20",
+          "program_code": "H5H0",
+          "entrance_date": "20250608",
+          "start_time": "1355",
+          "end_time": "1430",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:07:16 +0900",
+          "created_at": "2024-09-19 21:12:49 +0900",
+          "event_code": "H5H0",
+          "event_name": "大阪ヘルスケアパビリオン（本館）　リボーン体験",
+          "event_summary": "【想定所要時間60分】【集合時間：表示時刻通り】ミライの自分に会いにきませんか？みなさんの健康データをもとに作成された25年後の自分（アバター）と出会い、ミライのヘルスケアや都市生活を体験いただけます。2050年のミライであなたをお待ちしています！【留意事項：(1)このプログラムのご体験には、パビリオン公式アプリ又はWEBページから簡単な事前情報登録が必要です。(2)ご登録にあたっては、リンク先の利用基準や想定所要時間の詳細をご確認ください。】　※３歳以下の方もご予約が必要です。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-919156",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://2025osaka-pavilion.jp/20240925-2/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 5,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "141236",
+          "admission_buf_during": false
+        },
+        {
+          "id": 43702200,
+          "schedule_code": "2025062212HSH0",
+          "schedule_no": "12",
+          "schedule_name": "14:30-15:00",
+          "program_code": "HSH0",
+          "entrance_date": "20250622",
+          "start_time": "1415",
+          "end_time": "1500",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:11:18 +0900",
+          "created_at": "2024-08-30 01:42:33 +0900",
+          "event_code": "HSH0",
+          "event_name": "TECH WORLD館",
+          "event_summary": "#テックワールド館 #TECH WORLD館 #Tech World 館【所要時間：30分】【受付時間：予約時間内】．車いすでのご来場者は、同伴者１名までご予約なしで入館いただけます。ご予約の時間より遅れてご到着された方は、空きがあれば、以降の空いている時間帯にご案内を予定しています。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-010626",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "",
+          "portal_url_desc": "",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "143258",
+          "admission_buf_during": false
+        },
+        {
+          "id": 56849407,
+          "schedule_code": "2025070614HOH0",
+          "schedule_no": "14",
+          "schedule_name": "14:20-14:40",
+          "program_code": "HOH0",
+          "entrance_date": "20250706",
+          "start_time": "1420",
+          "end_time": "1440",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:10:48 +0900",
+          "created_at": "2024-09-19 21:15:50 +0900",
+          "event_code": "HOH0",
+          "event_name": "ブルーオーシャンドーム",
+          "event_summary": "ブルーオーシャンドームは「海の蘇生」をテーマに掲げ、地球や海に対する態度変容を起こすような圧倒的な表現装置とともに、海の持続的な活用にちなんだ展示スペースでは、各種イベントを実施し、来場者に今までにない体験を提供します。（展示映像の一部に集合体の表現があります。）",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-108932",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://www.zeri.jp/expo2025/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "143122",
+          "admission_buf_during": false
+        },
+        {
+          "entrance_date": "20250531",
+          "schedule_name": "20:30-20:50",
+          "event_name": "クウェートパビリオン",
+          "event_summary": "パビリオンは、発展、困難や、人々が切り開く未来のストーリーを織り交ぜながら、クウェートの自然な景観、豊富な遺産、革新的なビジョンの本質を美しく表現しています。エレガントで大きく広がった翼を模した大胆な建築は、進歩の光やエンパワーメントとしての地域でのクウェートの役割を反映した、寛容性と容認性の象徴です。パビリオン内では、歴史、革新や個人的なストーリーを通して見たクウェートの過去、現在、未来に関して、没入感のある体験をすることができます。パビリオンは、クウェートの変革を形成するビジョナリーに敬意を払い、未来にインスピレーションを与えながら、人々の精神を称賛しています。",
+          "use_state": 1,
+          "registered_channel": 5,
+        },
+        {
+          "entrance_date": "20250706",
+          "schedule_name": "16:35-16:50",
+          "event_name": "ヨルダンパビリオン",
+          "event_summary": "ヨルダンパビリオンは、時を超えた旅へとあなたを招待します。一歩踏み出すごとに歴史を遡り、そして未来へと瞬時に移動する体験が待っています。10分間の中で、1万年以上にわたる歴史、文化、そして未来への展望を探求しましょう。ヨルダン独自の視点から描かれるこの没入型の旅は、過去・現在・未来を織り交ぜ、ヨルダンの不屈の精神との深い結びつきを紡ぎます。素足でヨルダンの砂を感じ、時空を旅する未来への体験があなたを待っています。",
+          "use_state": 1,
+          "registered_channel": 5,
+        },
+        {
+          "id": 156707209,
+          "schedule_code": "2025091502N0K1",
+          "schedule_no": "02",
+          "schedule_name": "15:30-20:00 (OPEN14:30)",
+          "program_code": "N0K1",
+          "entrance_date": "20250915",
+          "start_time": "1430",
+          "end_time": "2000",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:24:51 +0900",
+          "created_at": "2025-06-14 02:21:07 +0900",
+          "event_code": "N0K1",
+          "event_name": "大阪ウィーク～秋～OSAKA MUSIC LOVER",
+          "event_summary": "【概要】J-POP、J-ROCKアーティストによるライブフェス/【9月14日（日）開場16時00分/開演17時00分/終演20時00分頃】/【9月15日（月祝）開場14時30分/開演15時30分/終演20時00分】/【その他】入場方法や詳細、最新情報をイベント関連HPに掲載しますので、必ずご確認の上、ご来場ください。",
+          "virtual_url": null,
+          "virtual_url_desc": null,
+          "portal_url": null,
+          "portal_url_desc": null,
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "152409",
+          "admission_buf_during": false
+        },
+        {
+          "id": 40003452,
+          "schedule_code": "2025081434H5H0",
+          "schedule_no": "34",
+          "schedule_name": "14:50-15:00",
+          "program_code": "H5H0",
+          "entrance_date": "20250814",
+          "start_time": "1435",
+          "end_time": "1510",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:07:17 +0900",
+          "created_at": "2024-09-19 21:12:51 +0900",
+          "event_code": "H5H0",
+          "event_name": "大阪ヘルスケアパビリオン（本館）　リボーン体験",
+          "event_summary": "【想定所要時間60分】【集合時間：表示時刻通り】ミライの自分に会いにきませんか？みなさんの健康データをもとに作成された25年後の自分（アバター）と出会い、ミライのヘルスケアや都市生活を体験いただけます。2050年のミライであなたをお待ちしています！【留意事項：(1)このプログラムのご体験には、パビリオン公式アプリ又はWEBページから簡単な事前情報登録が必要です。(2)ご登録にあたっては、リンク先の利用基準や想定所要時間の詳細をご確認ください。】　※３歳以下の方もご予約が必要です。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-919156",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://2025osaka-pavilion.jp/20240925-2/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 1,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "145414",
+          "admission_buf_during": false
+        },
+        {
+          "id": 8163234,
+          "schedule_code": "2025050322I600",
+          "schedule_no": "22",
+          "schedule_name": "14:45-15:00",
+          "program_code": "I600",
+          "entrance_date": "20250503",
+          "start_time": "1445",
+          "end_time": "1500",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:12:52 +0900",
+          "created_at": "2024-08-30 01:43:33 +0900",
+          "event_code": "I600",
+          "event_name": "シグネチャーパビリオン 石黒浩「いのちの未来」　一般",
+          "event_summary": "【所要時間】60分前後\r\n【集合時間】予約時間に表示された時間内に受付まで必ずお越しください\r\n【魅力】\r\n石黒浩が主導する「いのちの未来」パビリオンでは、ロボットやアンドロイドが「いのちを拡げる」展示を行います。\r\n【注意事項】\r\n・会場内のロボット、アンドロイドにはお手を触れないでください。\r\n・遅刻者は入場をお断りする場合がございます。\r\n・車いす利用での観覧は、台数に制限があるため、「車いす限定」でのご予約をお願いします。\r\nその他注意事項は、下記より必ずご一読ください。\r\nhttps://expo2025future-of-life.com/reservation-notes",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-951313",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://expo2025future-of-life.com/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 5,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "145057",
+          "admission_buf_during": false
+        },
+        {
+          "id": 24662591,
+          "schedule_code": "2025060112HWH0",
+          "schedule_no": "12",
+          "schedule_name": "15:00-15:30",
+          "program_code": "HWH0",
+          "entrance_date": "20250601",
+          "start_time": "1450",
+          "end_time": "1530",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:12:08 +0900",
+          "created_at": "2024-08-30 01:43:08 +0900",
+          "event_code": "HWH0",
+          "event_name": "飯田グループ×大阪公立大学共同出展館",
+          "event_summary": "【所要時間:20～45分】【受付時間:予約時間の10分前から】美しい西陣織を全面にまとったメビウスの輪形状の建物は、「良き伝統は進化を繰り返しながら未来に永続していく」というメッセージを表現しております。パビリオン内では、健康と環境に配慮した未来型住宅の技術の一部や、未来の自給自足型社会をイメージした街の模型や映像を通じて、当社グループが考える未来の暮らしを体感していただきたいと考えております。※１９：００以降に入館される際は、一部体験展示の利用が出来ない場合がありますのでご注意ください。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-769403",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://www.ighd.co.jp/lp/expo2025.html",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "145726",
+          "admission_buf_during": false
+        },
+        {
+          "id": 106737325,
+          "schedule_code": "2025081218H1H9",
+          "schedule_no": "18",
+          "schedule_name": "15:10-15:30",
+          "program_code": "H1H9",
+          "entrance_date": "20250812",
+          "start_time": "1500",
+          "end_time": "1530",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:06:10 +0900",
+          "created_at": "2024-12-13 02:04:19 +0900",
+          "event_code": "H1H9",
+          "event_name": "日本館　3エリア観覧",
+          "event_summary": "【所要時間（観覧時間）：35分】【受付時間：予約時間内】●予約時間に遅れた場合は、原則入館できません●予約時間から10分程度お待ちいただく場合があります●途中退館はできません●自然災害や展示機器のトラブルなどやむを得ない理由により閉館、観覧時間の変更などをすることがあります。その場合は再度のご予約をお願いします●来館日によって観覧コースが変わります●その他詳細は下記リンクからご確認ください。【抽選対象日】7月3日を除く毎日",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-204750",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://2025-japan-pavilion.go.jp/ticket/#three-area",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 5,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "150532",
+          "admission_buf_during": false
+        },
+        {
+          "id": 131724187,
+          "schedule_code": "2025083113HMH0",
+          "schedule_no": "13",
+          "schedule_name": "15:00-15:30",
+          "program_code": "HMH0",
+          "entrance_date": "20250831",
+          "start_time": "1500",
+          "end_time": "1530",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:10:35 +0900",
+          "created_at": "2024-08-30 01:42:07 +0900",
+          "event_code": "HMH0",
+          "event_name": "PASONA NATUREVERSE",
+          "event_summary": "【所要時間：約30分】【受付時間：予約時間枠内】\r\nパソナグループが出展するPASONA NATUREVERSEでは「いのち、ありがとう。」をコンセプトに掲げ、“いのちの象徴”である心臓を作り上げるiPS心筋シート等の最新テクノロジーをはじめ、「からだ・こころ・きずな」をテーマに様々な展示を行います。\r\nパビリオン全体のナビゲーターは鉄腕アトムとブラック・ジャックが務めます。\r\n＊パビリオンへのご入館は、表示時間の開始時間から終了時間までの間となります。\r\n　 また、パビリオンの最終入場時間は20:30となります。",
+          "virtual_url": "",
+          "virtual_url_desc": "",
+          "portal_url": "https://www.pasonagroup.co.jp/expo2025/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "150817",
+          "admission_buf_during": false
+        },
+        {
+          "id": 171845807,
+          "schedule_code": "2025092702M1N7",
+          "schedule_no": "02",
+          "schedule_name": "16:00-16:40 (OPEN15:00)",
+          "program_code": "M1N7",
+          "entrance_date": "20250927",
+          "start_time": "1500",
+          "end_time": "1640",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:20:49 +0900",
+          "created_at": "2025-05-22 02:18:52 +0900",
+          "event_code": "M1N7",
+          "event_name": "アート体感「LIFEいのち with スーパーキッズ・オーケストラ」 【E・F・Gブロック】 前方右スタンド席",
+          "event_summary": "超時空のいのちの旅。いのちは、宇宙から旅をしてきた─その記憶を、あなたの“心と身体”で再び受け取る時がきました。壮大なスケールで体感するART映像『LIFEいのち』と世界的指揮者・佐渡裕氏が最も愛情を注ぐスーパーキッズ・オーケストが生演奏の音楽と映像で呼び覚ます。世界中の親子を感動で包んだ体験が今、あなたの目の前に広がります。【開催日9月27日】【開場1時間前】【ブロック内自由席】【英語翻訳あり】【車いす席の方は車いす席をご予約ください】【予約は開場時間まで】【開場時間後の空きの有無、予約不要席は直接EXPOホールにお越しください】座席位置は「LIFEいのち」公式サイトにてご確認ください　※３歳以下のお子様も座席を使いたい場合は予約必要です。",
+          "virtual_url": null,
+          "virtual_url_desc": null,
+          "portal_url": null,
+          "portal_url_desc": null,
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 3,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "154133",
+          "admission_buf_during": false
+        },
+        {
+          "id": 42854304,
+          "schedule_code": "2025062112C7R0",
+          "schedule_no": "12",
+          "schedule_name": "15:30-16:00",
+          "program_code": "C7R0",
+          "entrance_date": "20250621",
+          "start_time": "1520",
+          "end_time": "1600",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:02:19 +0900",
+          "created_at": "2024-12-26 02:00:58 +0900",
+          "event_code": "C7R0",
+          "event_name": "オランダパビリオン　コモングラウンド",
+          "event_summary": "共に分かち合い、新しい価値を生み出すこと『コモングラウンド』を参加テーマに、オランダは人々と健全で幸せな社会構築を目指しています。循環型コンセプトで造られるパビリオンの名は、“A New Dawn‐新たな幕開け”。建物の中心には球体があり、持続的に利用可能なクリーンエネルギーと日の出を表現しています。人々が集い、互いに学び、刺激し合う開かれた空間のパビリオン内では、クリーンエネルギーを水から生成する新技術を紹介予定です。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-161891",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "",
+          "portal_url_desc": "",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "153849",
+          "admission_buf_during": false
+        },
+        {
+          "id": 11865885,
+          "schedule_code": "2025051128HCH0",
+          "schedule_no": "28",
+          "schedule_name": "15:45-16:30",
+          "program_code": "HCH0",
+          "entrance_date": "20250511",
+          "start_time": "1530",
+          "end_time": "1600",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:09:02 +0900",
+          "created_at": "2024-08-30 01:40:59 +0900",
+          "event_code": "HCH0",
+          "event_name": "電力館　　※予約開始時間の１０分前集合",
+          "event_summary": "【所要時間：４５分】【集合時間：予約時間の１０分前まで】「電力館 可能性のタマゴたち」は、エネルギーに関するたくさんの“可能性のタマゴ”を体験できるパビリオンです。世界でここにしかない“タマゴ型デバイス”とともに、みんなで動いたり、タッチしたり、音や光に包まれたり…さまざまな体験を通じて、未来を切り開くエネルギー技術にふれることができます。さあ、一緒にエネルギーの可能性を探しにいこう！",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-664929",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://www.fepc.or.jp/sp/expo2025/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 5,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "153556",
+          "admission_buf_during": false
+        },
+        {
+          "entrance_date": "20250518",
+          "schedule_name": "13:30-15:00",
+          "event_name": "ウズベキスタン国立交響楽団とリヒター・トリオによるガラ・コンサート",
+          "event_summary": "ウズベキスタン芸術文化発展基金は、EXPO 2025大阪・関西万博のイベントである特別なガラ・コンサートに皆さまをご招待し、ウズベキスタンの不朽の芸術遺産と日本とウズベキスタンの文化的つながりをご紹介します。コンサートプログラムには、両国の音楽の伝統を融合させた作品が含まれており、このユニークな芸術的対話を讃えるために特別に作曲された作品の世界初演も予定されています。",
+          "use_state": 1,
+          "registered_channel": 3,
+        },
+        {
+          "id": 13660538,
+          "schedule_code": "2025051807IO00",
+          "schedule_no": "07",
+          "schedule_name": "15:30-15:50",
+          "program_code": "IO00",
+          "entrance_date": "20250518",
+          "start_time": "1530",
+          "end_time": "1550",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:16:50 +0900",
+          "created_at": "2024-09-19 20:21:44 +0900",
+          "event_code": "IO00",
+          "event_name": "シグネチャーパビリオン　河瀨直美「Dialogue Theater - いのちのあかし -」",
+          "event_summary": "【所要時間：約55分】\r\nこのパビリオンは、「対話」を通じて、世界の至るところにある「分断」を明らかにし、解決を試みる実験場です。\r\n対話は、私たちに気づかせてくれます。人はもっとお互いを理解することができる、ということを。\r\nわたしの中にあなたがいて、あなたの中にもわたしがいるということを。\r\nよりよい未来を、一緒にうみだすことができることを。\r\nさあ、あなたもこのパビリオンで、分断のない未来への第一歩を踏み出しましょう。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-602110",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://expo2025-inochinoakashi.com/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 0,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 0,
+          "admission_time": null,
+          "admission_buf_during": false
+        },
+        {
+          "entrance_date": "20250525",
+          "schedule_name": "13:45-13:50",
+          "event_name": "アイルランドパビリオン ツアー",
+          "event_summary": "【所要時間：約50分】  想像力こそが人類の進歩の中心。アイルランドパビリオンのデザインは、石器時代からアイルランドの芸術として知られる古代のモチ一フ、｢トリスケル｣をベースにしています。3つの巴文様はそれぞれ、国家としてのアイルランド、日本との関係、クリエイティブな協働の精神を表しています。",
+          "use_state": 1,
+          "registered_channel": 5,
+        },
+        {
+          "id": 17992889,
+          "schedule_code": "2025052507IO00",
+          "schedule_no": "07",
+          "schedule_name": "15:30-15:50",
+          "program_code": "IO00",
+          "entrance_date": "20250525",
+          "start_time": "1530",
+          "end_time": "1550",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:16:50 +0900",
+          "created_at": "2024-09-19 20:21:44 +0900",
+          "event_code": "IO00",
+          "event_name": "シグネチャーパビリオン　河瀨直美「Dialogue Theater - いのちのあかし -」",
+          "event_summary": "【所要時間：約55分】\r\nこのパビリオンは、「対話」を通じて、世界の至るところにある「分断」を明らかにし、解決を試みる実験場です。\r\n対話は、私たちに気づかせてくれます。人はもっとお互いを理解することができる、ということを。\r\nわたしの中にあなたがいて、あなたの中にもわたしがいるということを。\r\nよりよい未来を、一緒にうみだすことができることを。\r\nさあ、あなたもこのパビリオンで、分断のない未来への第一歩を踏み出しましょう。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-602110",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://expo2025-inochinoakashi.com/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "153414",
+          "admission_buf_during": false
+        },
+        {
+          "id": 28087413,
+          "schedule_code": "2025060120H1H9",
+          "schedule_no": "20",
+          "schedule_name": "15:50-16:10",
+          "program_code": "H1H9",
+          "entrance_date": "20250601",
+          "start_time": "1540",
+          "end_time": "1610",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:06:11 +0900",
+          "created_at": "2024-12-13 02:04:18 +0900",
+          "event_code": "H1H9",
+          "event_name": "日本館　3エリア観覧",
+          "event_summary": "【所要時間（観覧時間）：35分】【受付時間：予約時間内】●予約時間に遅れた場合は、原則入館できません●予約時間から10分程度お待ちいただく場合があります●途中退館はできません●自然災害や展示機器のトラブルなどやむを得ない理由により閉館、観覧時間の変更などをすることがあります。その場合は再度のご予約をお願いします●来館日によって観覧コースが変わります●その他詳細は下記リンクからご確認ください。【抽選対象日】7月3日を除く毎日",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-204750",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://2025-japan-pavilion.go.jp/ticket/#three-area",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 5,
+          "proxy_reserve": true,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "155148",
+          "admission_buf_during": false
+        },
+        {
+          "id": 79659732,
+          "schedule_code": "2025072601M1PD",
+          "schedule_no": "01",
+          "schedule_name": "16:00-20:00 (OPEN15:00)",
+          "program_code": "M1PD",
+          "entrance_date": "20250726",
+          "start_time": "1600",
+          "end_time": "2000",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:21:02 +0900",
+          "created_at": "2025-04-26 00:24:52 +0900",
+          "event_code": "M1PD",
+          "event_name": "大阪ウィーク～夏～OSAKA MUSIC LOVER -JAPANIMATION ROCKS- 一般",
+          "event_summary": "【概要】ロックバンドが創るアニソンライブフェス/【開場15時/開演1６時/終演２０時頃】/【車いすでの参加の際は車いす席をご予約ください。（介助者１名同行可能）】/【その他】入場方法や詳細、最新情報をイベント関連HPに掲載しますので、必ずご確認の上、ご来場ください。　※３歳以下のお子様も座席を使いたい場合は予約必要です。",
+          "virtual_url": "",
+          "virtual_url_desc": "",
+          "portal_url": "https://osaka-kitena.jp/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 0,
+          "admission_time": null,
+          "admission_buf_during": false
+        },
+        {
+          "id": 19853500,
+          "schedule_code": "2025052413IC00",
+          "schedule_no": "13",
+          "schedule_name": "16:20-16:30",
+          "program_code": "IC00",
+          "entrance_date": "20250524",
+          "start_time": "1620",
+          "end_time": "1630",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:14:36 +0900",
+          "created_at": "2024-08-30 01:44:27 +0900",
+          "event_code": "IC00",
+          "event_name": "シグネチャーパビリオン 落合陽一  「null²」ダイアログモード",
+          "event_summary": "【所要時間30分】【受付時間：表示時刻通り】デジタルの身体（Mirrored Body）との対話、計算機自然で永遠の「いま」を生きるストーリーを観覧できます  ※本体験は強い光の明滅と大音量を使った演出です。※本体験は「Mirrored Body🄬アプリ」を事前にご準備いただくとよりお楽しみいただけます。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-024530",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://expo2025.digitalnatureandarts.or.jp/specialsite.html",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 5,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "162230",
+          "admission_buf_during": false
+        },
+        {
+          "id": 49551716,
+          "schedule_code": "2025062801M1VP",
+          "schedule_no": "01",
+          "schedule_name": "17:15-18:30 (OPEN16:30)",
+          "program_code": "M1VP",
+          "entrance_date": "20250628",
+          "start_time": "1630",
+          "end_time": "1830",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:21:43 +0900",
+          "created_at": "2025-06-14 02:19:04 +0900",
+          "event_code": "M1VP",
+          "event_name": "モナコナショナルデー スタンド席左側",
+          "event_summary": "スタンド席左側　モナコは、プリンス・カラビニエリ管弦楽団とモンテカルロ・バレエ団による魅力的な文化ショーケースを披露します。音楽の卓越性と現役任務を両立するカラビニエリで構成された管弦楽団は、モナコの伝統、国際的なポップス、日本の音楽的影響を融合させたダイナミックなプログラムを演奏します。モンテカルロ・バレエ団は、代表的なパ・ド・ドゥやトップソリストたちの演技を通じて、モナコの振付芸術を紹介します。さらに、プリンセス・グレース・アカデミーが、モナコの舞踊の伝統を讃える表現豊かな作品『Back on Track』で、次世代のダンサーたちの才能を披露します。",
+          "virtual_url": null,
+          "virtual_url_desc": null,
+          "portal_url": null,
+          "portal_url_desc": null,
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "164459",
+          "admission_buf_during": false
+        },
+        {
+          "entrance_date": "20250727",
+          "event_name": "イタリアパビリオン also hosting the Holy See",
+          "event_summary":"イタリア館は、MCAマリオ・クチネッラ・アーキテクツがデザイン設計を手がけ、「アートは人生を再生する」というテーマを掲げています。ルネサンス期の理想都市に着想を得た館内には、イタリアの都市文化を象徴する劇場、ポルティコ（列柱廊）、広場、庭園が配置されています。ここでいう「アート」とは、イタリアが誇る美、創造性、そして卓越した職人技を指す「テクネ」を意味します。",
+          "schedule_name": "18:30-18:40",
+          "use_state": 1,
+          "registered_channel": 1,
+        },
+        {
+          "entrance_date": "20250812",
+          "event_name": "イタリアパビリオン also hosting the Holy See",
+          "event_summary":"イタリア館は、MCAマリオ・クチネッラ・アーキテクツがデザイン設計を手がけ、「アートは人生を再生する」というテーマを掲げています。ルネサンス期の理想都市に着想を得た館内には、イタリアの都市文化を象徴する劇場、ポルティコ（列柱廊）、広場、庭園が配置されています。ここでいう「アート」とは、イタリアが誇る美、創造性、そして卓越した職人技を指す「テクネ」を意味します。",
+          "schedule_name": "16:30-16:40",
+          "use_state": 1,
+          "registered_channel": 1,
+        },
+        {
+          "id": 96981406,
+          "schedule_code": "2025080946II00",
+          "schedule_no": "46",
+          "schedule_name": "16:30-16:40",
+          "program_code": "II00",
+          "entrance_date": "20250809",
+          "start_time": "1630",
+          "end_time": "1640",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:15:27 +0900",
+          "created_at": "2024-08-30 01:45:08 +0900",
+          "event_code": "II00",
+          "event_name": "*13歳以上*シグネチャーパビリオン 河森正治 「いのちめぐる冒険」 超時空シアター",
+          "event_summary": "【所要時間：約45分】【入館条件：13歳以上】【集合時間：ご予約時間】以下の体験コースです。超時空シアター｜最新のMR／VRで体感する いのちをめぐる冒険物語※ANIMA!を除く全ての展示をご覧いただけます。・ご予約時間に遅れた方はご体験いただけません。・このコースでは、安全のための注意事項がございます。以下の「詳しくはこちら」を必ずご確認の上、ご予約ください。・車いすの方は車いす対応コースをご予約ください。　",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-106271",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://shojikawamori.jp/expo2025/attention/#course01",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "163021",
+          "admission_buf_during": false
+        },
+        {
+          "id": 53879543,
+          "schedule_code": "2025062914HIH0",
+          "schedule_no": "14",
+          "schedule_name": "16:32-16:57",
+          "program_code": "HIH0",
+          "entrance_date": "20250629",
+          "start_time": "1632",
+          "end_time": "1657",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:10:10 +0900",
+          "created_at": "2024-08-30 01:41:57 +0900",
+          "event_code": "HIH0",
+          "event_name": "三菱未来館 JOURNEY TO LIFE",
+          "event_summary": "【所要時間:60分】【受付時間:予約時間内】【ご案内は時間内での受付順になります 】　「いのち輝く地球を未来に繋ぐ」をコンセプトに、一人ひとりがいのちの未来を想像する時間と空間を体験できるパビリオンです。パビリオン注意事項については、当館のプロモーションサイト内「三菱未来館における注意事項」にてご確認ください。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-365554",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://www.mitsubishi.com/ja/expo2025/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 5,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "164452",
+          "admission_buf_during": false
+        },
+        {
+          "id": 72791692,
+          "schedule_code": "2025072140CFR0",
+          "schedule_no": "40",
+          "schedule_name": "16:48-17:00",
+          "program_code": "CFR0",
+          "entrance_date": "20250721",
+          "start_time": "1648",
+          "end_time": "1703",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:02:51 +0900",
+          "created_at": "2024-08-30 01:39:58 +0900",
+          "event_code": "CFR0",
+          "event_name": "国際赤十字・赤新月運動館",
+          "event_summary": "【所要時間：約30分】【予約サイトに記載の時間は「集合時間」です】例）10：00～10：12の間に集合・受付⇒10：12～体験約30分●「集合時間」を過ぎた場合、ご入場出来ません●途中退館はできません●天候や自然災害、展示機器のトラブル等による閉館の際は再予約をお願いします●その他詳細ルールは下記リンクからご確認ください●「人間を救うのは、人間だ。～The Power of Humanity～」世界の人道危機、そこに立ち向かい、立ち上がる人々の姿を描くヒューマンストーリーを、没入感の高い半球型ドームシアターで上映。赤十字の使命と、人間のチカラを感じていただきます。■5月8日は、２カ月前抽選および7日前抽選の受付を予定していません。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-265500",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://expo2025.jrc.or.jp/caution/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "164917",
+          "admission_buf_during": false
+        },
+        {
+          "id": 36115448,
+          "schedule_code": "2025061434HGH0",
+          "schedule_no": "34",
+          "schedule_name": "17:15-17:30",
+          "program_code": "HGH0",
+          "entrance_date": "20250614",
+          "start_time": "1700",
+          "end_time": "1730",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:09:52 +0900",
+          "created_at": "2024-08-30 01:41:43 +0900",
+          "event_code": "HGH0",
+          "event_name": "パナソニック館 「ノモの国」",
+          "event_summary": "【所要時間：60分】【受付時間:予約時間の5分前まで】子どもたち一人ひとりが、こころの持ちようが変わるような体験を通じて「自分を信じるチカラと一歩を踏み出す勇気」が持てるきっかけを提供いたします。コンセプトは“解き放て。こころと からだと じぶんと せかい。”当館は、演出に光・映像・振動・音等を用いた体験型パビリオンです。表情読み取り技術を用いる演出がございます。お申込み前にURL（公式サイト）内の「注意事項」をご確認ください。障がいのある方は、おひとりでは体験いただくことが難しい場合もございます。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-499244",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://the-land-of-nomo.panasonic/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "172200",
+          "admission_buf_during": false
+        },
+        {
+          "id": 142212583,
+          "schedule_code": "2025090601M1ZY",
+          "schedule_no": "01",
+          "schedule_name": "17:30-18:15 (OPEN17:00)",
+          "program_code": "M1ZY",
+          "entrance_date": "20250906",
+          "start_time": "1700",
+          "end_time": "1815",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:22:09 +0900",
+          "created_at": "2025-08-04 14:44:32 +0900",
+          "event_code": "M1ZY",
+          "event_name": "奥河内音絵巻2025「日月山水タイムマシン」スタンド席",
+          "event_summary": "【６日は2回公演です】/【7日は3回公演です】/【車いすでの参加の際は車いす用の席をご予約ください】/【3歳以下席予約不要】/【国宝屏風絵「日月四季山水図(じつげつしきさんすいず)」の世界を舞台に、音と光が時を超えて交錯する壮大な音楽劇です。世界の音と物語が溶け合い、観る人の心を時空の旅へと誘います。万博のステージで繰り広げられる、時空と文化を超えるタイムマシンエンターテイメント『奥河内音絵巻』を、どうぞじっくりお楽しみください。】",
+          "virtual_url": "",
+          "virtual_url_desc": "",
+          "portal_url": "https://www.expo-osaka2025.com/osakaweek/regular/event/0906_kawachinagano.html",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "171250",
+          "admission_buf_during": false
+        },
+        {
+          "id": 21394785,
+          "schedule_code": "2025060135HAH0",
+          "schedule_no": "35",
+          "schedule_name": "17:30-17:55",
+          "program_code": "HAH0",
+          "entrance_date": "20250601",
+          "start_time": "1715",
+          "end_time": "1755",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:08:50 +0900",
+          "created_at": "2024-09-19 21:14:19 +0900",
+          "event_code": "HAH0",
+          "event_name": "NTT Pavilion※予約時間の15分前集合",
+          "event_summary": "【体験時間】30分※予約時間15分前より受付開始。NTTパビリオンでは、次世代通信インフラ”IOWN”により、物理的な距離や心理的なカベを超えて、映像や音声だけではなく、離れた空間そのものや、離れた場所にいる人やものの感覚を共有することで、未来のコミュニケーションの形と驚きのある体験を提供します。以下、ご了承の上ご予約ください。本公演の特性上、強い光や大きな音、暗闇、3Dグラスを使った体験等があります。お客様を撮影・録音し、一部演出で使用することがあります。3歳以下のお子様も入場可能。車イス(電動含む)での体験可能。アシスティング・ドッグは同伴可能。その他注意事項は、予約前に特設HPの概要をご確認ください。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-194156",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://group.ntt/jp/expo2025/pavilion/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 3,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "171528",
+          "admission_buf_during": false
+        },
+        {
+          "id": 15885683,
+          "schedule_code": "2025051841HQH0",
+          "schedule_no": "41",
+          "schedule_name": "17:36-17:48",
+          "program_code": "HQH0",
+          "entrance_date": "20250518",
+          "start_time": "1716",
+          "end_time": "1753",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:11:05 +0900",
+          "created_at": "2024-08-30 01:42:18 +0900",
+          "event_code": "HQH0",
+          "event_name": "GUNDAM NEXT FUTURE PAVILION",
+          "event_summary": "【所要時間　５０分】ガンダムを通して世界中の人とつながり、ともに「未来」を考えるきっかけの場となることを目指します。※パビリオンデーの7月20日の入館予約については、後日発表予定です。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-519633",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://www.bandainamco.co.jp/gundam-next-future-pavilion/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 5,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "172738",
+          "admission_buf_during": false
+        },
+        {
+          "entrance_date": "20250506",
+          "schedule_name": "15:50-16:00",
+          "event_name": "シグネチャーパビリオン 福岡伸一  いのち動的平衡館",
+          "event_summary": "【所要時間30分】【受付時間：表示時刻通り】わたしたちのいのちはどこから来てどこへ行くのでしょう。あらゆるものは壊れ崩れていくというエントロピー増大の法則に抗うかのように、生命は絶え間なく自らを壊しながら作り直すことでバランスを保っています。これを「動的平衡」と呼びます。いのちは、破壊と生成のはざまにあります。わたしたちのいのちは、漂う流れの中にいる一時的な存在です。生命の本質は「動的平衡」にあるのです。",
+          "use_state": 1,
+          "registered_channel": 5,
+        },
+        {
+          "id": 8891343,
+          "schedule_code": "2025050627J900",
+          "schedule_no": "27",
+          "schedule_name": "18:00-18:20",
+          "program_code": "J900",
+          "entrance_date": "20250506",
+          "start_time": "1750",
+          "end_time": "1820",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:17:05 +0900",
+          "created_at": "2024-08-30 02:42:27 +0900",
+          "event_code": "J900",
+          "event_name": "「未来の都市」 参加型シアター入場付き",
+          "event_summary": "【所要時間：約50分】　【受付時間：予約時間内】　未来の都市は「幸せの都市へ！」をテーマに、斬新な映像と展示による15のアトラクションで、楽しさと学びを通じて未来体験ができる大規模パビリオンです。　　このプログラムは、アトラクションの一つ“参加型シアター”へ入場(座席あり)できるコースです。＊時間入替制ではありませんので所要時間は目安となります。＊お手洗いはご入場前にパビリオン外の公衆トイレをご利用ください。館内に来場者用トイレはありません。　※３歳以下の方もご予約が必要です。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-276526",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://www.expo2025-futurecity.jp/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "180219",
+          "admission_buf_during": false
+        },
+        {
+          "id": 6724798,
+          "schedule_code": "2025050357IL00",
+          "schedule_no": "57",
+          "schedule_name": "18:40-18:50",
+          "program_code": "IL00",
+          "entrance_date": "20250503",
+          "start_time": "1820",
+          "end_time": "1850",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:16:33 +0900",
+          "created_at": "2024-08-30 01:46:14 +0900",
+          "event_code": "IL00",
+          "event_name": "シグネチャーパビリオン　小山薫堂　「EARTH MART」",
+          "event_summary": "【所要時間30～40分】【受付時間：予約時間内】【テーマ：いのちをつむぐ】【プロデューサー：小山薫堂】ここは空想のスーパーマーケット。買い物するような感覚でワクワクしながら、これまで当たり前だと思っていたことをリセットし、これからの食べ方を見つめ直す様々な体験が散りばめられています。「いのちのフロア」では、私たちの食を支える多様ないのちの煌めきや物語に出会います。「未来のフロア」では、少し先の未来のテクノロジーやビジョン、これから先も紡いでゆきたい食の知恵や工夫を世界と共有します。さらに万博期間中に「万博漬け」と称してパビリオン内で梅干を漬け、それを2050年に食べられる引き換えチケットを配布予定。#EARTH MART　#EARTH　MART　#ＥＡＲＴＨ　ＭＡＲＴ　#ＥＡＲＴＨ ＭＡＲＴ　#earth mart　#earth　mart　#アースマート",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-986208",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://expo2025earthmart.jp/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "184147",
+          "admission_buf_during": false
+        },
+        {
+          "id": 177344396,
+          "schedule_code": "2025092738C730",
+          "schedule_no": "38",
+          "schedule_name": "18:45-19:00",
+          "program_code": "C730",
+          "entrance_date": "20250927",
+          "start_time": "1830",
+          "end_time": "1900",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:02:10 +0900",
+          "created_at": "2024-09-19 21:10:51 +0900",
+          "event_code": "C730",
+          "event_name": "オーストラリアパビリオン 「Chasing the Sun ― 太陽の大地へ」",
+          "event_summary": "[所要時間15分] [予約時間の15分以上前にご到着されないようお気をつけください。] オーストラリアの太陽を追いかける、他では体験できない多感覚の冒険に出かけましょう。オーストラリアの音、景色、香りに包まれながら、静かなブッシュを散策し、夜空を眺め、水路に飛び込みましょう。オーストラリアの先住民族と「大地（カントリー）」との深いつながりを発見し、古代の知恵がより持続可能な未来をどのように導いているかを学んでください。過去、現在、未来が一体となって明るい未来を創造する世界を体験してください。　※３歳以下の方もご予約が必要です。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-171483",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://www.expoaustralia.gov.au/ja/australia-pavilion",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "190556",
+          "admission_buf_during": false
+        },
+        {
+          "id": 5931506,
+          "schedule_code": "2025050121HMH0",
+          "schedule_no": "21",
+          "schedule_name": "19:00-19:30",
+          "program_code": "HMH0",
+          "entrance_date": "20250501",
+          "start_time": "1900",
+          "end_time": "1930",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:10:35 +0900",
+          "created_at": "2024-08-30 01:42:06 +0900",
+          "event_code": "HMH0",
+          "event_name": "PASONA NATUREVERSE",
+          "event_summary": "【所要時間：約30分】【受付時間：予約時間枠内】\r\nパソナグループが出展するPASONA NATUREVERSEでは「いのち、ありがとう。」をコンセプトに掲げ、“いのちの象徴”である心臓を作り上げるiPS心筋シート等の最新テクノロジーをはじめ、「からだ・こころ・きずな」をテーマに様々な展示を行います。\r\nパビリオン全体のナビゲーターは鉄腕アトムとブラック・ジャックが務めます。\r\n＊パビリオンへのご入館は、表示時間の開始時間から終了時間までの間となります。\r\n　 また、パビリオンの最終入場時間は20:30となります。",
+          "virtual_url": "",
+          "virtual_url_desc": "",
+          "portal_url": "https://www.pasonagroup.co.jp/expo2025/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "190341",
+          "admission_buf_during": false
+        },
+        {
+          "id": 70550764,
+          "schedule_code": "2025071902Q001",
+          "schedule_no": "02",
+          "schedule_name": "19:30-20:00 (OPEN19:00)",
+          "program_code": "Q001",
+          "entrance_date": "20250719",
+          "start_time": "1900",
+          "end_time": "2000",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:25:34 +0900",
+          "created_at": "2024-09-21 15:51:35 +0900",
+          "event_code": "Q001",
+          "event_name": "『アオと夜の虹のパレード』 Presented by SUNTORY｜DAIKIN　予約観覧エリア",
+          "event_summary": "水と空気のスペクタクルショー『アオと夜の虹のパレード』は、水/空気/光/炎/映像、そして音楽を駆使して、壮大なスケールで生命の物語を描くスペクタクルショーです。万博を象徴する「ウォータープラザ」で毎晩開催されます。本編：約20分※開始時間は時期によって異なります/3歳以下は予約不要です/予約は観覧エリア入場のみで、座席やブロック指定はありません/着席エリアと立見エリアがあります/入場はお並びの順でご案内となり、立見になることがあります/会場は屋外ですが、エリア内での傘の使用は禁止です/開始30分前までにご来場ください/天候等により予告なく時間変更や中止になる場合があります（予約振替は不可）",
+          "virtual_url": "",
+          "virtual_url_desc": "",
+          "portal_url": "https://www.expo2025.airandwatershow.jp/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "190453",
+          "admission_buf_during": false
+        },
+        {
+          "id": 101047466,
+          "schedule_code": "2025081202Q001",
+          "schedule_no": "02",
+          "schedule_name": "19:30-20:00 (OPEN19:00)",
+          "program_code": "Q001",
+          "entrance_date": "20250812",
+          "start_time": "1900",
+          "end_time": "2000",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:25:34 +0900",
+          "created_at": "2024-09-21 15:51:35 +0900",
+          "event_code": "Q001",
+          "event_name": "『アオと夜の虹のパレード』 Presented by SUNTORY｜DAIKIN　予約観覧エリア",
+          "event_summary": "水と空気のスペクタクルショー『アオと夜の虹のパレード』は、水/空気/光/炎/映像、そして音楽を駆使して、壮大なスケールで生命の物語を描くスペクタクルショーです。万博を象徴する「ウォータープラザ」で毎晩開催されます。本編：約20分※開始時間は時期によって異なります/3歳以下は予約不要です/予約は観覧エリア入場のみで、座席やブロック指定はありません/着席エリアと立見エリアがあります/入場はお並びの順でご案内となり、立見になることがあります/会場は屋外ですが、エリア内での傘の使用は禁止です/開始30分前までにご来場ください/天候等により予告なく時間変更や中止になる場合があります（予約振替は不可）",
+          "virtual_url": "",
+          "virtual_url_desc": "",
+          "portal_url": "https://www.expo2025.airandwatershow.jp/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "191812",
+          "admission_buf_during": false
+        },
+        {
+          "id": 104368819,
+          "schedule_code": "2025081440I600",
+          "schedule_no": "40",
+          "schedule_name": "19:15-19:30",
+          "program_code": "I600",
+          "entrance_date": "20250814",
+          "start_time": "1915",
+          "end_time": "1930",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:12:53 +0900",
+          "created_at": "2024-08-30 01:43:32 +0900",
+          "event_code": "I600",
+          "event_name": "シグネチャーパビリオン 石黒浩「いのちの未来」　一般",
+          "event_summary": "【所要時間】60分前後\r\n【集合時間】予約時間に表示された時間内に受付まで必ずお越しください\r\n【魅力】\r\n石黒浩が主導する「いのちの未来」パビリオンでは、ロボットやアンドロイドが「いのちを拡げる」展示を行います。\r\n【注意事項】\r\n・会場内のロボット、アンドロイドにはお手を触れないでください。\r\n・遅刻者は入場をお断りする場合がございます。\r\n・車いす利用での観覧は、台数に制限があるため、「車いす限定」でのご予約をお願いします。\r\nその他注意事項は、下記より必ずご一読ください。\r\nhttps://expo2025future-of-life.com/reservation-notes",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-951313",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://expo2025future-of-life.com/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "191820",
+          "admission_buf_during": false
+        },
+        {
+          "id": 9936577,
+          "schedule_code": "2025050661D630",
+          "schedule_no": "61",
+          "schedule_name": "19:30-19:40",
+          "program_code": "D630",
+          "entrance_date": "20250506",
+          "start_time": "1920",
+          "end_time": "1940",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:04:48 +0900",
+          "created_at": "2024-09-19 21:11:54 +0900",
+          "event_code": "D630",
+          "event_name": "ポーランドパビリオン",
+          "event_summary": "［所要時間40分］ポーランドは創造性豊かな国民を誇る国として紹介されます。ポーランド人には「創造の遺伝子」が代々継承され、より良い未来のために行動することを可能にし、不測の世界変化に対する柔軟性を促進し、技術的・社会的解決策をもたらす新しい発想を生み出す力につながっているとされています。　※３歳以下の方もご予約が必要です。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-499794",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://expo.gov.pl/?lang=en",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 5,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "192454",
+          "admission_buf_during": false
+        },
+        {
+          "id": 215460532,
+          "schedule_code": "2025101307IC0C",
+          "schedule_no": "07",
+          "schedule_name": "19:20-19:30",
+          "program_code": "IC0C",
+          "entrance_date": "20251013",
+          "start_time": "1920",
+          "end_time": "1930",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:14:55 +0900",
+          "created_at": "2025-10-06 16:22:10 +0900",
+          "event_code": "IC0C",
+          "event_name": "シグネチャーパビリオン 落合陽一  「null²」 ナオライモード　※予約時間の10分前集合",
+          "event_summary": "【平均所要時間10分】【受付時間：予約時間の10分前集合】ナオライモード – さようならヌルの森この10分間は、パビリオンと来場者が共に迎える最後の「直会（なおらい）」です．null²はこの後ヌルへと帰り、私たちは饗宴によってその旅立ちを祝います．厳かな引導の響きと、祭囃子のような拍手や歓声が交錯する空間で、来場者全員が一つの共同体となり、「さようなら」と「ありがとう」を分かち合います．それは終わりではなく、新たな始まりへの祈りと歓待の儀式です．",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-664929",
+          "virtual_url_desc": "バーチャル万博についてはこちら",
+          "portal_url": "https://expo2025.digitalnatureandarts.or.jp/specialsite.html",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 5,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "192330",
+          "admission_buf_during": false
+        },
+        {
+          "id": 12070765,
+          "schedule_code": "2025051142H7H0",
+          "schedule_no": "42",
+          "schedule_name": "19:30-19:45",
+          "program_code": "H7H0",
+          "entrance_date": "20250511",
+          "start_time": "1930",
+          "end_time": "1945",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:08:32 +0900",
+          "created_at": "2024-09-19 21:14:06 +0900",
+          "event_code": "H7H0",
+          "event_name": "関西パビリオン",
+          "event_summary": "【所要時間60分】関西パビリオンは、「いのち輝く関西悠久の歴史と現在」をテーマに、滋賀、京都、兵庫、奈良、和歌山、鳥取、徳島、福井、三重の9府県が出展に参加します。出展参加府県による独自展示エリアを設け、関西各地の歴史や文化、観光などの多彩な魅力を発信します。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-143168",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://future.kouiki-kansai.jp/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 5,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "193057",
+          "admission_buf_during": false
+        },
+        {
+          "id": 7115070,
+          "schedule_code": "2025050445H3H0",
+          "schedule_no": "45",
+          "schedule_name": "20:00-20:15",
+          "program_code": "H3H0",
+          "entrance_date": "20250504",
+          "start_time": "1945",
+          "end_time": "2015",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:07:03 +0900",
+          "created_at": "2024-12-13 02:04:34 +0900",
+          "event_code": "H3H0",
+          "event_name": "ウーマンズ パビリオン in collaboration with Cartier",
+          "event_summary": "【所要時間:30分】コンセプトは「When women thrive, humanity thrives ～ともに生き、ともに輝く未来へ～」。2020年ドバイ国際博覧会から継承され、女性たちの体験や視点を通じ、公平で持続可能な未来を志すことを来場者に呼びかけるパビリオンです。パビリオン内では音声（字幕）ガイドをもとに、スタッフがご案内いたします。一度の観覧には人数制限がございますので、事前予約のうえご来館ください。パビリオン2Fの「ＷＡ」スペース（催事スペース）でのイベント参加には別途イベント予約が必要です。詳細はイベント情報ページにてご確認ください。",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-719552",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://womenspavilion.cartier.com/ja/",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "195425",
+          "admission_buf_during": false
+        },
+        {
+          "id": 10460400,
+          "schedule_code": "2025051145II06",
+          "schedule_no": "45",
+          "schedule_name": "20:15-20:30",
+          "program_code": "II06",
+          "entrance_date": "20250511",
+          "start_time": "2015",
+          "end_time": "2030",
+          "suspend_divi": 0,
+          "updated_at": "2025-10-13 02:16:09 +0900",
+          "created_at": "2024-08-30 01:45:49 +0900",
+          "event_code": "II06",
+          "event_name": "シグネチャーパビリオン 河森正治 「いのちめぐる冒険」 ANIMA! 床振動演出あり",
+          "event_summary": "【所要時間：約30分】【集合時間：ご予約時間】以下の体験コースです。ANIMA!｜音楽と映像と振動がシンクロする全身で感じるいのちのミュージカル※超時空シアターを除く全ての展示をご覧いただけます。・ご予約時間に遅れた方はご体験いただけません。・このコースでは、安全のために一定の利用制限を設けております。以下の「詳しくはこちら」を必ずご確認の上、ご予約ください。　",
+          "virtual_url": "https://contents.ssv.virtualexpo.expo2025.or.jp/deeplink/cushion_page.html?SpaceId=SS-106271",
+          "virtual_url_desc": "バーチャル万博はこちら",
+          "portal_url": "https://shojikawamori.jp/expo2025/attention/#course03",
+          "portal_url_desc": "詳しくはこちら",
+          "ticket_id": "EUCAGY3ZPN",
+          "registered_channel": 4,
+          "proxy_reserve": false,
+          "use_state": 1,
+          "group_ticket_qr_divi": 0,
+          "program_ticket_state": 1,
+          "admission_time": "201749",
+          "admission_buf_during": false
+        },
+        {
+          "entrance_date": "20250503",
+          "schedule_name": "19:50-20:00",
+          "event_name": "シグネチャーパビリオン 落合陽一  「null²」インスタレーションモード",
+          "event_summary": "【所要時間10分】【受付時間：表示時刻通り】インスタレーションモードは、天井と床の鏡面状LEDに映し出される人工生命が自律生成された作品を鑑賞いただけます。",
+          "use_state": 1,
+          "registered_channel": 5,
+        }
+      ],
+      "ticket_type_id": "21",
+      "change_reservation": 0,
+      "fast_lottery": false,
+      "lotteries": {
+        "fast": []
+      },
+      "adult_type": true,
+      "disp_bid_status": 2
+    }
+  ],
+  "count": 2
+};
+
+        function loadData() {
+            try {
+                processData(embeddedData);
+            } catch (error) {
+                document.getElementById('app').innerHTML = `
+                    <div class="error">
+                        <h3>エラー</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function processData(data) {
+            // 入場日ごとにデータを集約
+            const entranceMap = new Map();
+
+            if (data.list) {
+                data.list.forEach(item => {
+                    // schedulesから入場日と時間を取得
+                    if (item.schedules) {
+                        item.schedules.forEach(schedule => {
+                            const date = schedule.entrance_date;
+                            const time = schedule.admission_time;
+                            const scheduleName = schedule.schedule_name;
+
+                            if (!entranceMap.has(date)) {
+                                entranceMap.set(date, {
+                                    date: date,
+                                    time: time,
+                                    scheduleName: scheduleName,
+                                    pavilions: []
+                                });
+                            } else {
+                                if (time && !entranceMap.get(date).time) {
+                                    entranceMap.get(date).time = time;
+                                }
+                                if (scheduleName && !entranceMap.get(date).scheduleName) {
+                                    entranceMap.get(date).scheduleName = scheduleName;
+                                }
+                            }
+                        });
+                    }
+
+                    // event_schedulesからパビリオン予約を取得
+                    if (item.event_schedules) {
+                        item.event_schedules.forEach(event => {
+                            const date = event.entrance_date;
+                            if (entranceMap.has(date)) {
+                                entranceMap.get(date).pavilions.push({
+                                    name: event.event_name,
+                                    time: event.schedule_name || '',
+                                    useState: event.use_state,
+                                    summary: event.event_summary || '',
+                                    registeredChannel: event.registered_channel
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+
+            // 日付順にソート
+            const sortedEntries = Array.from(entranceMap.values()).sort((a, b) =>
+                a.date.localeCompare(b.date)
+            );
+
+            // 統計情報を更新
+            const totalPavilions = sortedEntries.reduce((sum, entry) =>
+                sum + entry.pavilions.length, 0
+            );
+            document.getElementById('total-visits').textContent = sortedEntries.length;
+            document.getElementById('total-pavilions').textContent = totalPavilions;
+
+            // HTMLを生成
+            renderEntries(sortedEntries);
+
+            // グラフを描画
+            renderChart(sortedEntries);
+        }
+
+        function renderEntries(entries) {
+            const app = document.getElementById('app');
+
+            if (entries.length === 0) {
+                app.innerHTML = '<div class="no-pavilions">データがありません</div>';
+                return;
+            }
+
+            const html = `
+                <div class="entrance-list">
+                    ${entries.map((entry, index) => `
+                        <div class="entrance-item" data-index="${index}">
+                            <div class="entrance-header">
+                                <div class="entrance-date">
+                                    <div class="date-main">${formatDate(entry.date)}</div>
+                                    ${entry.scheduleName ? `<div class="date-schedule">予約枠: ${entry.scheduleName}</div>` : ''}
+                                    ${entry.time ? `<div class="date-time">入場時刻: ${formatTime(entry.time)}</div>` : ''}
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    ${entry.pavilions.length > 0 ?
+                                        `<div class="entrance-count">${entry.pavilions.length}件</div>` :
+                                        '<div class="entrance-count">予約なし</div>'
+                                    }
+                                    <div class="toggle-icon">▼</div>
+                                </div>
+                            </div>
+                            <div class="pavilion-list">
+                                ${entry.pavilions.length > 0 ?
+                                    entry.pavilions.map(pavilion => `
+                                        <div class="pavilion-item">
+                                            <div class="pavilion-status">${pavilion.useState === 1 ? '✓' : '×'}</div>
+                                            <div class="pavilion-info">
+                                                <div class="pavilion-time">
+                                                    <span>${pavilion.time}</span>
+                                                    ${getChannelBadge(pavilion.registeredChannel)}
+                                                </div>
+                                                <div class="pavilion-name">${pavilion.name}</div>
+                                                ${pavilion.summary ? `<div class="pavilion-summary">${pavilion.summary}</div>` : ''}
+                                            </div>
+                                        </div>
+                                    `).join('') :
+                                    '<div class="no-pavilions">パビリオンの予約はありません</div>'
+                                }
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            app.innerHTML = html;
+
+            // トグル機能を追加
+            document.querySelectorAll('.entrance-header').forEach(header => {
+                header.addEventListener('click', function() {
+                    const item = this.parentElement;
+                    item.classList.toggle('active');
+                });
+            });
+        }
+
+        function formatDate(dateStr) {
+            // YYYYMMDD -> YYYY年MM月DD日 (曜日)
+            const year = dateStr.substring(0, 4);
+            const month = dateStr.substring(4, 6);
+            const day = dateStr.substring(6, 8);
+            const date = new Date(year, month - 1, day);
+            const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+            const weekday = weekdays[date.getDay()];
+            return `${year}年${month}月${day}日 (${weekday})`;
+        }
+
+        function formatTime(timeStr) {
+            // HHMMSS -> HH:MM:SS
+            if (!timeStr || timeStr.length < 4) return '';
+            const hour = timeStr.substring(0, 2);
+            const minute = timeStr.substring(2, 4);
+            const second = timeStr.length >= 6 ? timeStr.substring(4, 6) : '00';
+            return `${hour}:${minute}:${second}`;
+        }
+
+        function getChannelBadge(channel) {
+            const channelNames = {
+                1: '2ヶ月前',
+                2: '1ヶ月前',
+                3: '1週間前',
+                4: '3日前',
+                5: '当日'
+            };
+
+            if (!channel || !channelNames[channel]) return '';
+
+            return `<span class="channel-badge channel-${channel}">${channelNames[channel]}</span>`;
+        }
+
+        function calculateMonthlyVisits(entries) {
+            // 月ごとの入場回数を集計
+            const monthlyData = {};
+
+            entries.forEach(entry => {
+                const yearMonth = entry.date.substring(0, 6); // YYYYMM
+                if (!monthlyData[yearMonth]) {
+                    monthlyData[yearMonth] = 0;
+                }
+                monthlyData[yearMonth]++;
+            });
+
+            // ソートして配列に変換
+            return Object.entries(monthlyData)
+                .sort((a, b) => a[0].localeCompare(b[0]))
+                .map(([month, count]) => ({
+                    month: month,
+                    count: count,
+                    label: `${month.substring(0, 4)}/${month.substring(4, 6)}`
+                }));
+        }
+
+        function renderChart(entries) {
+            const chartContainer = document.getElementById('chart');
+            const monthlyData = calculateMonthlyVisits(entries);
+
+            if (monthlyData.length === 0) {
+                chartContainer.innerHTML = '<div class="no-pavilions">データがありません</div>';
+                return;
+            }
+
+            // 最大値を取得
+            const maxCount = Math.max(...monthlyData.map(d => d.count));
+
+            // 画面サイズに応じた最大高さを設定
+            const isMobile = window.innerWidth <= 600;
+            const chartMaxHeight = isMobile ? 160 : 220; // モバイル: 220px - 35px(上padding) - 5px(下padding) - 20px(値表示) = 160px
+
+            const html = `
+                <div class="chart">
+                    ${monthlyData.map(data => {
+                        const maxHeight = chartMaxHeight;
+                        const minHeight = 20;
+                        const heightPx = Math.max(minHeight, (data.count / maxCount) * maxHeight);
+                        return `
+                            <div class="chart-bar-wrapper">
+                                <div class="chart-bar" style="height: ${heightPx}px">
+                                    <div class="chart-value">${data.count}</div>
+                                </div>
+                                <div class="chart-label">${data.label}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            chartContainer.innerHTML = html;
+        }
+
+        // データ読み込み開始
+        loadData();
+    </script>
+</body>
+</html>
